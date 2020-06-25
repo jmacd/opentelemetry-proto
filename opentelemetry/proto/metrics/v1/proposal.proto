@@ -1,0 +1,114 @@
+message ResourceMetrics {
+  opentelemetry.proto.resource.v1.Resource resource = 1;
+
+  repeated InstrumentationLibraryMetrics instrumentation_library_metrics = 2;
+}
+
+message InstrumentationLibraryMetrics {
+  opentelemetry.proto.common.v1.InstrumentationLibrary instrumentation_library = 1;
+
+  repeated Metric metrics = 2;
+}
+
+message Metric {
+  MetricDescriptor metric_descriptor = 1;
+
+  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
+
+  repeated DataValue values = 6;
+}
+
+message MetricDescriptor {
+  string name = 1;
+  string description = 2;
+  string unit = 3;
+
+  enum ValueType {
+    INVALID_VALUE_TYPE = 0;
+    INTEGER = 1;
+    FLOAT = 2;
+    HISTOGRAM = 4;
+    SUMMARY = 5;  // MMLSC + Non-mergeable quantiles.
+
+    // Sketches, extensions, ...
+  }
+
+  ValueType type = 4;
+
+  enum Kind {
+    INVALID_KIND = 0;
+
+    // ... and 18 valid kinds (see otlp_bits.go)
+
+    AddingMonotonicInstantaneousSynchronous  Kind = MaskAdding | MaskInstantaneous | MaskMonotonic | MaskSynchronous
+    AddingMonotonicInstantaneousAsynchronous Kind = MaskAdding | MaskInstantaneous | MaskMonotonic
+    AddingMonotonicCumulativeSynchronous     Kind = MaskAdding | MaskCumulative | MaskMonotonic | MaskSynchronous
+    AddingMonotonicCumulativeAsynchronous    Kind = MaskAdding | MaskCumulative | MaskMonotonic
+    AddingMonotonicDeltaSynchronous          Kind = MaskAdding | MaskDelta | MaskMonotonic | MaskSynchronous
+    AddingMonotonicDeltaAsynchronous         Kind = MaskAdding | MaskDelta | MaskMonotonic
+
+    AddingInstantaneousSynchronous  Kind = MaskAdding | MaskInstantaneous | MaskSynchronous
+    AddingInstantaneousAsynchronous Kind = MaskAdding | MaskInstantaneous
+    AddingCumulativeSynchronous     Kind = MaskAdding | MaskCumulative | MaskSynchronous
+    AddingCumulativeAsynchronous    Kind = MaskAdding | MaskCumulative
+    AddingDeltaSynchronous          Kind = MaskAdding | MaskDelta | MaskSynchronous
+    AddingDeltaAsynchronous         Kind = MaskAdding | MaskDelta
+
+    GroupingInstantaneousSynchronous  Kind = MaskGrouping | MaskInstantaneous | MaskSynchronous
+    GroupingInstantaneousAsynchronous Kind = MaskGrouping | MaskInstantaneous
+    GroupingCumulativeSynchronous     Kind = MaskGrouping | MaskCumulative | MaskSynchronous
+    GroupingCumulativeAsynchronous    Kind = MaskGrouping | MaskCumulative
+    GroupingDeltaSynchronous          Kind = MaskGrouping | MaskDelta | MaskSynchronous
+    GroupingDeltaAsynchronous         Kind = MaskGrouping | MaskDelta
+  }
+
+  Flags flags = 5; // 4 bits of information
+}
+
+message DataValue {
+  // (Same comment)
+  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
+
+  // (Same comment)
+  fixed64 start_time_unix_nano = 2;
+
+  // (Same comment)
+  fixed64 time_unix_nano = 3;
+
+  // A logical oneof among the following fields, as prescribed by ValueType:
+  int64 value_int64 = 4;    // INT64
+  double value_double = 5;  // FLOAT
+  Histogram histogram = 6;  // HISTOGRAM
+  Summary summary = 7;      // SUMMARY:  TODO (add Min/Max/Last for MMLSC)
+
+  // Optional exemplars
+  Exemplars exemplars = 8;
+}
+
+message HistogramDataPoint {
+  // Same except without labels, start_time, or time fields.
+}
+
+// SummaryDataPoint is a single data point in a timeseries that describes the time-varying
+// values of a Summary metric.
+message SummaryDataPoint {
+  // Remove the labels, start_time, and time fields.
+  //
+  // TODO: Add min, max, last fields
+  // as described in https://github.com/open-telemetry/oteps/pull/117
+
+  // (Same comment)
+  uint64 count = 4;  // Also TODO: count fields uint64->double because of sampling
+
+  // (Same comment)
+  double sum = 5;
+
+  // (Same comments)
+  message ValueAtPercentile {
+    double percentile = 1;
+    double value = 2;
+  }
+
+  // (Same comment)
+  repeated ValueAtPercentile percentile_values = 6;
+}
