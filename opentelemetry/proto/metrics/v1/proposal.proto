@@ -28,7 +28,7 @@ message MetricDescriptor {
     INTEGER = 1;
     FLOAT = 2;
     HISTOGRAM = 4;
-    SUMMARY = 5;  // MMLSC + Non-mergeable quantiles.
+    SUMMARY = 5;  // MMLSC + Non-mergeable quantiles
 
     // Sketches, extensions, ...
   }
@@ -70,24 +70,47 @@ message DataValue {
   repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
 
   // (Same comment)
+  // If omitted and not instantaneous, this is taken as the default _REPORT_TIMESTAMP_.
   fixed64 start_time_unix_nano = 2;
 
   // (Same comment)
+  // Use this in conjunction with `value_int64` and `value_double`, or `summary`.
+  // When the value type is instantaneous, it applies to *this point* 
   fixed64 time_unix_nano = 3;
 
   // A logical oneof among the following fields, as prescribed by ValueType:
-  int64 value_int64 = 4;    // INT64
-  double value_double = 5;  // FLOAT
-  Histogram histogram = 6;  // HISTOGRAM
-  Summary summary = 7;      // SUMMARY:  TODO (add Min/Max/Last for MMLSC)
+
+  // INT64
+  // ADDING -> Sum, Grouping -> RAW
+  int64 value_int64 = 4;
+
+  // FLOAT
+  // (as above)
+  double value_double = 6;
+
+  // HISTOGRAM
+  // (Similar comments)
+  // Note this is an exact representation for Adding instruments.
+  Histogram histogram = 8;
+
+  // SUMMARY
+  // (see changes below)
+  Summary summary = 9;
 
   // Optional exemplars
-  Exemplars exemplars = 8;
+  // Import connor's code
+  Exemplars exemplars = 10;
 }
 
 message HistogramDataPoint {
   // Same except without labels, start_time, or time fields.
 }
+
+// TODO RAW?
+  // Raw values w/ inspecific timestamp
+  // repeated int64 multi_int64 = 11 [packed=true];
+  // repeated int64 multi_double = 12 [packed=true];
+
 
 // SummaryDataPoint is a single data point in a timeseries that describes the time-varying
 // values of a Summary metric.
@@ -96,19 +119,33 @@ message SummaryDataPoint {
   //
   // TODO: Add min, max, last fields
   // as described in https://github.com/open-telemetry/oteps/pull/117
+  //
+  // TODO: Why does Histogram not go here?
 
   // (Same comment)
-  uint64 count = 4;  // Also TODO: count fields uint64->double because of sampling
+  uint64 count = 1;  // Also TODO: count fields uint64->double because of sampling
 
   // (Same comment)
-  double sum = 5;
+  int64  sum_int64 = 2;
+  double sum_double = 3;
 
-  // (Same comments)
-  message ValueAtPercentile {
-    double percentile = 1;
-    double value = 2;
+  // MIN, MAX, LAST value
+  int64  min_int64 = 4;
+  double min_double = 5;
+
+  int64  max_int64 = 6;
+  double max_double = 7;
+
+  int64  last_int64 = 8;
+  double last_double = 9;
+  
+  // (Similar comments)
+  message ValueAtQuantile {
+    double quantile = 1;  // [0,1], if 0 prefer MIN, if 1 prefer MAX.
+    int64  value_int64 = 2;
+    double value_double = 3;
   }
 
   // (Same comment)
-  repeated ValueAtPercentile percentile_values = 6;
+  repeated ValueAtPercentile percentile_values = 10;
 }

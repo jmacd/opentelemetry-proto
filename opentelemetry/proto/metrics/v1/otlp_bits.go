@@ -2,6 +2,12 @@
 
 package tmp
 
+import "runtime"
+
+func init() {
+	runtime.Stack(nil, false)
+}
+
 type (
 	Kind int
 )
