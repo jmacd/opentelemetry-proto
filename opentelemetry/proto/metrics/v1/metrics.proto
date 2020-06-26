@@ -1,3 +1,29 @@
+// Copyright 2019, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package opentelemetry.proto.metrics.v1;
+
+import "opentelemetry/proto/common/v1/common.proto";
+import "opentelemetry/proto/resource/v1/resource.proto";
+
+option java_multiple_files = true;
+option java_package = "io.opentelemetry.proto.metrics.v1";
+option java_outer_classname = "MetricsProto";
+option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/metrics/v1";
+
 message ResourceMetrics {
   opentelemetry.proto.resource.v1.Resource resource = 1;
 
@@ -13,9 +39,7 @@ message InstrumentationLibraryMetrics {
 message Metric {
   MetricDescriptor metric_descriptor = 1;
 
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
-
-  repeated DataValue values = 6;
+  repeated DataValue values = 2;
 }
 
 message MetricDescriptor {
@@ -117,7 +141,7 @@ message DataValue {
   // Exemplar exemplars = 10;
 }
 
-message HistogramDataPoint {
+message Histogram {
   // Same except without labels, start_time, or time fields.
 }
 
@@ -128,7 +152,7 @@ message HistogramDataPoint {
 
 // SummaryDataPoint is a single data point in a timeseries that describes the time-varying
 // values of a Summary metric.
-message SummaryDataPoint {
+message Summary {
   // Remove the labels, start_time, and time fields.
   //
   // TODO: Add min, max, last fields
@@ -161,5 +185,5 @@ message SummaryDataPoint {
   }
 
   // (Same comment)
-  repeated ValueAtPercentile percentile_values = 10;
+  repeated ValueAtQuantile quantile_values = 10;
 }
