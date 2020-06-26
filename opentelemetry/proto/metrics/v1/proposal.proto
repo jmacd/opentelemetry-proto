@@ -38,31 +38,46 @@ message MetricDescriptor {
   enum Kind {
     INVALID_KIND = 0;
 
-    // ... and 18 valid kinds (see otlp_bits.go)
+    // One of the following three MUST be set. There are 3 exclusive Temporality kinds.
+    // MASK_INSTANTANEOUS = 1 << 0
+    // MASK_CUMULATIVE    = 1 << 1
+    // MASK_DELTA         = 1 << 2
+    //
+    // One of the following two MUST be set. There are 2 exclusive Structure kinds.
+    // MASK_GROUPING = 1 << 3
+    // MASK_ADDING   = 1 << 4
+    //
+    // May be set with MASK_ADDING.
+    // MASK_MONOTONIC = 1 << 5
+    //
+    // May be set for any instrument.
+    // MASK_SYNCHRONOUS = 1 << 6
+    //
+    // The following codes are generated
+    
+    ADDING_MONOTONIC_INSTANTANEOUS_SYNCHRONOUS  = 0x71; // MASK_ADDING|MASK_INSTANTANEOUS|MASK_MONOTONIC|MASK_SYNCHRONOUS
+    ADDING_MONOTONIC_INSTANTANEOUS_ASYNCHRONOUS = 0x31; // MASK_ADDING|MASK_INSTANTANEOUS|MASK_MONOTONIC
+    ADDING_MONOTONIC_CUMULATIVE_SYNCHRONOUS     = 0x72; // MASK_ADDING|MASK_CUMULATIVE|MASK_MONOTONIC|MASK_SYNCHRONOUS
+    ADDING_MONOTONIC_CUMULATIVE_ASYNCHRONOUS    = 0x32; // MASK_ADDING|MASK_CUMULATIVE|MASK_MONOTONIC
+    ADDING_MONOTONIC_DELTA_SYNCHRONOUS          = 0x74; // MASK_ADDING|MASK_DELTA|MASK_MONOTONIC|MASK_SYNCHRONOUS
+    ADDING_MONOTONIC_DELTA_ASYNCHRONOUS         = 0x34; // MASK_ADDING|MASK_DELTA|MASK_MONOTONIC
 
-    AddingMonotonicInstantaneousSynchronous  Kind = MaskAdding | MaskInstantaneous | MaskMonotonic | MaskSynchronous
-    AddingMonotonicInstantaneousAsynchronous Kind = MaskAdding | MaskInstantaneous | MaskMonotonic
-    AddingMonotonicCumulativeSynchronous     Kind = MaskAdding | MaskCumulative | MaskMonotonic | MaskSynchronous
-    AddingMonotonicCumulativeAsynchronous    Kind = MaskAdding | MaskCumulative | MaskMonotonic
-    AddingMonotonicDeltaSynchronous          Kind = MaskAdding | MaskDelta | MaskMonotonic | MaskSynchronous
-    AddingMonotonicDeltaAsynchronous         Kind = MaskAdding | MaskDelta | MaskMonotonic
+    ADDING_INSTANTANEOUS_SYNCHRONOUS            = 0x51; // MASK_ADDING|MASK_INSTANTANEOUS|MASK_SYNCHRONOUS
+    ADDING_INSTANTANEOUS_ASYNCHRONOUS           = 0x11; // MASK_ADDING|MASK_INSTANTANEOUS
+    ADDING_CUMULATIVE_SYNCHRONOUS               = 0x52; // MASK_ADDING|MASK_CUMULATIVE|MASK_SYNCHRONOUS
+    ADDING_CUMULATIVE_ASYNCHRONOUS              = 0x12; // MASK_ADDING|MASK_CUMULATIVE
+    ADDING_DELTA_SYNCHRONOUS                    = 0x54; // MASK_ADDING|MASK_DELTA|MASK_SYNCHRONOUS
+    ADDING_DELTA_ASYNCHRONOUS                   = 0x14; // MASK_ADDING|MASK_DELTA
 
-    AddingInstantaneousSynchronous  Kind = MaskAdding | MaskInstantaneous | MaskSynchronous
-    AddingInstantaneousAsynchronous Kind = MaskAdding | MaskInstantaneous
-    AddingCumulativeSynchronous     Kind = MaskAdding | MaskCumulative | MaskSynchronous
-    AddingCumulativeAsynchronous    Kind = MaskAdding | MaskCumulative
-    AddingDeltaSynchronous          Kind = MaskAdding | MaskDelta | MaskSynchronous
-    AddingDeltaAsynchronous         Kind = MaskAdding | MaskDelta
-
-    GroupingInstantaneousSynchronous  Kind = MaskGrouping | MaskInstantaneous | MaskSynchronous
-    GroupingInstantaneousAsynchronous Kind = MaskGrouping | MaskInstantaneous
-    GroupingCumulativeSynchronous     Kind = MaskGrouping | MaskCumulative | MaskSynchronous
-    GroupingCumulativeAsynchronous    Kind = MaskGrouping | MaskCumulative
-    GroupingDeltaSynchronous          Kind = MaskGrouping | MaskDelta | MaskSynchronous
-    GroupingDeltaAsynchronous         Kind = MaskGrouping | MaskDelta
+    GROUPING_INSTANTANEOUS_SYNCHRONOUS          = 0x49; // MASK_GROUPING|MASK_INSTANTANEOUS|MASK_SYNCHRONOUS
+    GROUPING_INSTANTANEOUS_ASYNCHRONOUS         = 0x9;  // MASK_GROUPING|MASK_INSTANTANEOUS
+    GROUPING_CUMULATIVE_SYNCHRONOUS             = 0x4a; // MASK_GROUPING|MASK_CUMULATIVE|MASK_SYNCHRONOUS
+    GROUPING_CUMULATIVE_ASYNCHRONOUS            = 0xa;  // MASK_GROUPING|MASK_CUMULATIVE
+    GROUPING_DELTA_SYNCHRONOUS                  = 0x4c; // MASK_GROUPING|MASK_DELTA|MASK_SYNCHRONOUS
+    GROUPING_DELTA_ASYNCHRONOUS                 = 0xc;  // MASK_GROUPING|MASK_DELTA
   }
 
-  Flags flags = 5; // 4 bits of information
+  Kind kind = 5;
 }
 
 message DataValue {
@@ -99,7 +114,7 @@ message DataValue {
 
   // Optional exemplars
   // Import connor's code
-  Exemplars exemplars = 10;
+  // Exemplar exemplars = 10;
 }
 
 message HistogramDataPoint {
@@ -110,7 +125,6 @@ message HistogramDataPoint {
   // Raw values w/ inspecific timestamp
   // repeated int64 multi_int64 = 11 [packed=true];
   // repeated int64 multi_double = 12 [packed=true];
-
 
 // SummaryDataPoint is a single data point in a timeseries that describes the time-varying
 // values of a Summary metric.
