@@ -39,7 +39,7 @@ message InstrumentationLibraryMetrics {
 message Metric {
   MetricDescriptor metric_descriptor = 1;
 
-  repeated DataValue values = 2;
+  repeated DataPoint points = 2;
 }
 
 message MetricDescriptor {
@@ -49,62 +49,67 @@ message MetricDescriptor {
 
   enum ValueType {
     INVALID_VALUE_TYPE = 0;
-    INTEGER = 1;
-    FLOAT = 2;
-    HISTOGRAM = 4;
-    SUMMARY = 5;  // MMLSC + Non-mergeable quantiles
+    INT64 = 1;    // A scalar: SUM or LASTVALUE
+    DOUBLE = 2;      // A scalar: SUM or LASTVALUE
+    HISTOGRAM = 4;  // ...
+    SUMMARY = 5;    // MMLSC + Non-mergeable quantiles
+    RAW = 6;        // The exemplars are the value
 
-    // Sketches, extensions, ...
+    // Sketches and other type extensions.
   }
 
-  ValueType type = 4;
+  ValueType value_type = 4;
+
+  enum KindMask {
+    INVALID_KIND_MASK = 0;
+
+    // One of the following three MUST be set. There are 3 exclusive Temporality kinds.
+    INSTANTANEOUS = 0x1;
+    CUMULATIVE    = 0x2;
+    DELTA         = 0x4;
+
+    // One of the following two MUST be set. There are 2 exclusive Structure kinds.
+    GROUPING      = 0x8;
+    ADDING        = 0x10;
+
+    // May be set with ADDING.
+    MONOTONIC     = 0x20;
+
+    // May be set for any instrument.
+    SYNCHRONOUS   = 0x40;
+  }
 
   enum Kind {
     INVALID_KIND = 0;
 
-    // One of the following three MUST be set. There are 3 exclusive Temporality kinds.
-    // MASK_INSTANTANEOUS = 1 << 0
-    // MASK_CUMULATIVE    = 1 << 1
-    // MASK_DELTA         = 1 << 2
-    //
-    // One of the following two MUST be set. There are 2 exclusive Structure kinds.
-    // MASK_GROUPING = 1 << 3
-    // MASK_ADDING   = 1 << 4
-    //
-    // May be set with MASK_ADDING.
-    // MASK_MONOTONIC = 1 << 5
-    //
-    // May be set for any instrument.
-    // MASK_SYNCHRONOUS = 1 << 6
-    //
-    // The following codes are generated
+    // The following codes are generated from the valid combinations of the mask bits above.
     
-    ADDING_MONOTONIC_INSTANTANEOUS_SYNCHRONOUS  = 0x71; // MASK_ADDING|MASK_INSTANTANEOUS|MASK_MONOTONIC|MASK_SYNCHRONOUS
-    ADDING_MONOTONIC_INSTANTANEOUS_ASYNCHRONOUS = 0x31; // MASK_ADDING|MASK_INSTANTANEOUS|MASK_MONOTONIC
-    ADDING_MONOTONIC_CUMULATIVE_SYNCHRONOUS     = 0x72; // MASK_ADDING|MASK_CUMULATIVE|MASK_MONOTONIC|MASK_SYNCHRONOUS
-    ADDING_MONOTONIC_CUMULATIVE_ASYNCHRONOUS    = 0x32; // MASK_ADDING|MASK_CUMULATIVE|MASK_MONOTONIC
-    ADDING_MONOTONIC_DELTA_SYNCHRONOUS          = 0x74; // MASK_ADDING|MASK_DELTA|MASK_MONOTONIC|MASK_SYNCHRONOUS
-    ADDING_MONOTONIC_DELTA_ASYNCHRONOUS         = 0x34; // MASK_ADDING|MASK_DELTA|MASK_MONOTONIC
+    ADDING_MONOTONIC_INSTANTANEOUS_SYNCHRONOUS  = 0x71;
+    ADDING_MONOTONIC_INSTANTANEOUS_ASYNCHRONOUS = 0x31;
+    ADDING_MONOTONIC_CUMULATIVE_SYNCHRONOUS     = 0x72;
+    ADDING_MONOTONIC_CUMULATIVE_ASYNCHRONOUS    = 0x32;
+    ADDING_MONOTONIC_DELTA_SYNCHRONOUS          = 0x74;
+    ADDING_MONOTONIC_DELTA_ASYNCHRONOUS         = 0x34;
 
-    ADDING_INSTANTANEOUS_SYNCHRONOUS            = 0x51; // MASK_ADDING|MASK_INSTANTANEOUS|MASK_SYNCHRONOUS
-    ADDING_INSTANTANEOUS_ASYNCHRONOUS           = 0x11; // MASK_ADDING|MASK_INSTANTANEOUS
-    ADDING_CUMULATIVE_SYNCHRONOUS               = 0x52; // MASK_ADDING|MASK_CUMULATIVE|MASK_SYNCHRONOUS
-    ADDING_CUMULATIVE_ASYNCHRONOUS              = 0x12; // MASK_ADDING|MASK_CUMULATIVE
-    ADDING_DELTA_SYNCHRONOUS                    = 0x54; // MASK_ADDING|MASK_DELTA|MASK_SYNCHRONOUS
-    ADDING_DELTA_ASYNCHRONOUS                   = 0x14; // MASK_ADDING|MASK_DELTA
+    ADDING_INSTANTANEOUS_SYNCHRONOUS            = 0x51;
+    ADDING_INSTANTANEOUS_ASYNCHRONOUS           = 0x11;
+    ADDING_CUMULATIVE_SYNCHRONOUS               = 0x52;
+    ADDING_CUMULATIVE_ASYNCHRONOUS              = 0x12;
+    ADDING_DELTA_SYNCHRONOUS                    = 0x54;
+    ADDING_DELTA_ASYNCHRONOUS                   = 0x14;
 
-    GROUPING_INSTANTANEOUS_SYNCHRONOUS          = 0x49; // MASK_GROUPING|MASK_INSTANTANEOUS|MASK_SYNCHRONOUS
-    GROUPING_INSTANTANEOUS_ASYNCHRONOUS         = 0x9;  // MASK_GROUPING|MASK_INSTANTANEOUS
-    GROUPING_CUMULATIVE_SYNCHRONOUS             = 0x4a; // MASK_GROUPING|MASK_CUMULATIVE|MASK_SYNCHRONOUS
-    GROUPING_CUMULATIVE_ASYNCHRONOUS            = 0xa;  // MASK_GROUPING|MASK_CUMULATIVE
-    GROUPING_DELTA_SYNCHRONOUS                  = 0x4c; // MASK_GROUPING|MASK_DELTA|MASK_SYNCHRONOUS
-    GROUPING_DELTA_ASYNCHRONOUS                 = 0xc;  // MASK_GROUPING|MASK_DELTA
+    GROUPING_INSTANTANEOUS_SYNCHRONOUS          = 0x49;
+    GROUPING_INSTANTANEOUS_ASYNCHRONOUS         = 0x9; 
+    GROUPING_CUMULATIVE_SYNCHRONOUS             = 0x4a;
+    GROUPING_CUMULATIVE_ASYNCHRONOUS            = 0xa; 
+    GROUPING_DELTA_SYNCHRONOUS                  = 0x4c;
+    GROUPING_DELTA_ASYNCHRONOUS                 = 0xc; 
   }
 
   Kind kind = 5;
 }
 
-message DataValue {
+message DataPoint {
   // (Same comment)
   repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
 
@@ -114,54 +119,60 @@ message DataValue {
 
   // (Same comment)
   // Use this in conjunction with `value_int64` and `value_double`, or `summary`.
-  // When the value type is instantaneous, it applies to *this point* 
+  // When the kind is instantaneous, this field applies to *this point*.  
   fixed64 time_unix_nano = 3;
 
   // A logical oneof among the following fields, as prescribed by ValueType:
 
-  // INT64
-  // ADDING -> Sum, Grouping -> RAW
+  // INT64/FLOAT ADDING -> Sum (Counter), Grouping -> RAW (Gauge); This
+  // could be "last value" or it could be a random value (or other
+  // selection approach)
   int64 value_int64 = 4;
-
-  // FLOAT
-  // (as above)
-  double value_double = 6;
+  double value_double = 5;
 
   // HISTOGRAM
   // (Similar comments)
   // Note this is an exact representation for Adding instruments.
-  Histogram histogram = 8;
+  Histogram histogram = 6;
 
   // SUMMARY
   // (see changes below)
-  Summary summary = 9;
+  Summary summary = 7;
 
   // Optional exemplars
-  // Import connor's code
-  // Exemplar exemplars = 10;
+  repeated RawValue exemplars = 8;
 }
 
-message Histogram {
-  // Same except without labels, start_time, or time fields.
-}
+// TODO: How to get MIN/MAX/LAST (which are not unique) via exemplars?
+//  -> require the use of MMLSC?
 
 // TODO RAW?
   // Raw values w/ inspecific timestamp
   // repeated int64 multi_int64 = 11 [packed=true];
   // repeated int64 multi_double = 12 [packed=true];
 
+
+// MONDAY THINKING
+
+// Guidelines:
+// Use Summary+MMLSC to store a LastValue with corresponding Count/Sum.
+// Use LASTVALUE to store a LastValue w/o count.
+// Use SUM to store a Sum w/o count.
+// Use RAW to store
+
+
+
+
 // SummaryDataPoint is a single data point in a timeseries that describes the time-varying
 // values of a Summary metric.
 message Summary {
-  // Remove the labels, start_time, and time fields.
+  // Remove the labels, start_time, and time TODO.
   //
-  // TODO: Add min, max, last fields
+  // fields: Add min, max, last fields
   // as described in https://github.com/open-telemetry/oteps/pull/117
   //
-  // TODO: Why does Histogram not go here?
-
   // (Same comment)
-  uint64 count = 1;  // Also TODO: count fields uint64->double because of sampling
+  uint64 count = 1;
 
   // (Same comment)
   int64  sum_int64 = 2;
@@ -186,4 +197,102 @@ message Summary {
 
   // (Same comment)
   repeated ValueAtQuantile quantile_values = 10;
+}
+
+message RawValue {
+  // Numerical value of the measurement that was recorded. Only one of these 
+  // two fields is used for the data, based on MetricDescriptor.measurement_type
+  double value_double = 1;
+  int64 value_int64 = 2;
+
+  // Exact time that the measurement was recorded
+  fixed64 time_unix_nano = 3;
+
+  // Labels that were passed with the measurement, but not included in the DataPoint's labels
+  repeated opentelemetry.proto.common.v1.StringKeyValue additional_labels = 4;
+
+  // (Optional) Span ID of the current trace
+  bytes span_id = 5;
+
+  // (Optional) Trace ID of the current trace
+  bytes trace_id = 6;
+
+  // (Optional) When sample_count is non-zero, this exemplar has been chosen in a statistically
+  // unbiased way such that the exemplar is representative of `sample_count` individual events
+  double sample_count = 7;
+}
+
+message Histogram {
+  // count is the number of values in the population. Must be non-negative. This value
+  // must be equal to the sum of the "count" fields in buckets if a histogram is provided.
+  uint64 count = 4;
+
+  // sum of the values in the population. If count is zero then this field
+  // must be zero. This value must be equal to the sum of the "sum" fields in buckets if
+  // a histogram is provided.
+  double sum = 5;
+
+  // Bucket contains values for a bucket.
+  message Bucket {
+    // The number of values in each bucket of the histogram, as described by
+    // bucket_options.
+    uint64 count = 1;
+
+    // Exemplars are example points that may be used to annotate aggregated
+    // Histogram values. They are metadata that gives information about a
+    // particular value added to a Histogram bucket.
+    message Exemplar {
+      // Value of the exemplar point. It determines which bucket the exemplar belongs to.
+      // If bucket_options define bounds for this bucket then this value must be within
+      // the defined bounds.
+      double value = 1;
+
+      // time_unix_nano is the moment when this exemplar was recorded.
+      // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.
+      fixed64 time_unix_nano = 2;
+
+      // exemplar_attachments are contextual information about the example value.
+      // Keys in this list must be unique.
+      repeated opentelemetry.proto.common.v1.StringKeyValue attachments = 3;
+    }
+
+    // exemplar is an optional representative value of the bucket.
+    Exemplar exemplar = 2;
+  }
+
+  // buckets is an optional field contains the values of histogram for each bucket.
+  //
+  // The sum of the values in the buckets "count" field must equal the value in the count field.
+  //
+  // The number of elements in buckets array must be by one greater than the
+  // number of elements in bucket_bounds array.
+  //
+  // Note: if HistogramDataPoint.bucket_options defines bucket bounds then this field
+  // must also be present and number of elements in this field must be equal to the
+  // number of buckets defined by bucket_options.
+  repeated Bucket buckets = 6;
+
+  // A histogram may optionally contain the distribution of the values in the population.
+  // In that case one of the option fields below and "buckets" field both must be defined.
+  // Otherwise all option fields and "buckets" field must be omitted in which case the
+  // distribution of values in the histogram is unknown and only the total count and sum are known.
+
+  // explicit_bounds is the only supported bucket option currently.
+  // TODO: Add more bucket options.
+
+  // explicit_bounds specifies buckets with explicitly defined bounds for values.
+  // The bucket boundaries are described by "bounds" field.
+  //
+  // This defines size(bounds) + 1 (= N) buckets. The boundaries for bucket
+  // at index i are:
+  //
+  // [0, bounds[i]) for i == 0
+  // [bounds[i-1], bounds[i]) for 0 < i < N-1
+  // [bounds[i], +infinity) for i == N-1
+  // The values in bounds array must be strictly increasing and > 0.
+  //
+  // Note: only [a, b) intervals are currently supported for each bucket. If we decides
+  // to also support (a, b] intervals we should add support for these by defining a boolean
+  // value which decides what type of intervals to use.
+  repeated double explicit_bounds = 7;
 }
