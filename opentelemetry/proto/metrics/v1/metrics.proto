@@ -49,13 +49,22 @@ message MetricDescriptor {
 
   enum ValueType {
     INVALID_VALUE_TYPE = 0;
-    INT64 = 1;    // A scalar: SUM or LASTVALUE
-    DOUBLE = 2;      // A scalar: SUM or LASTVALUE
-    HISTOGRAM = 4;  // ...
-    SUMMARY = 5;    // MMLSC + Non-mergeable quantiles
-    RAW = 6;        // The exemplars are the value
 
-    // Sketches and other type extensions.
+    SCALAR_INT64     = 2;
+    SCALAR_DOUBLE    = 3;
+
+    HISTOGRAM_INT64  = 4;
+    HISTOGRAM_DOUBLE = 5;
+
+    SUMMARY_INT64    = 6;
+    SUMMARY_DOUBLE   = 7;
+
+    RAW_INT64        = 8;
+    RAW_DOUBLE       = 10;
+
+    // TODO: Sketches can be represented in various ways, depending on
+    // the technique.  One viable representation simply uses weighted
+    // RAW_* value types (e.g., a T-digest can be encoded this way).
   }
 
   ValueType value_type = 4;
