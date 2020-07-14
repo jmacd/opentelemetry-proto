@@ -14,19 +14,19 @@
 
 syntax = "proto3";
 
-package opentelemetry.proto.resource.v1;
+package opentelemetry.jmacd.proto.resource.v1;
 
-import "opentelemetry/proto/common/v1/common.proto";
+import "opentelemetry/jmacd/proto/common/v1/common.proto";
 
 option java_multiple_files = true;
-option java_package = "io.opentelemetry.proto.resource.v1";
+option java_package = "io.opentelemetry.jmacd.proto.resource.v1";
 option java_outer_classname = "ResourceProto";
 option go_package = "github.com/jmacd/opentelemetry-proto/gen/go/resource/v1";
 
 // Resource information.
 message Resource {
   // Set of labels that describe the resource.
-  repeated opentelemetry.proto.common.v1.KeyValue attributes = 1;
+  repeated opentelemetry.jmacd.proto.common.v1.KeyValue attributes = 1;
 
   // dropped_attributes_count is the number of dropped attributes. If the value is 0, then
   // no attributes were dropped.

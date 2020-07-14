@@ -4,7 +4,7 @@ OPENAPI_OUTDIR := "./$(GENDIR)/openapi"
 GOPATH_GENDIR := $(GOPATH_DIR)/$(GENDIR)
 
 # Find all .proto files.
-PROTO_FILES := $(wildcard opentelemetry/proto/*/v1/*.proto opentelemetry/proto/collector/*/v1/*.proto)
+PROTO_FILES := $(wildcard opentelemetry/jmacd/proto/*/v1/*.proto opentelemetry/jmacd/proto/collector/*/v1/*.proto)
 
 # Function to execute a command. Note the empty line before endef to make sure each command
 # gets executed separately instead of concatenated with previous one.
@@ -23,8 +23,8 @@ ci: gen-go gen-java gen-swagger
 gen-go:
 	rm -rf ./$(GENDIR)/go
 	$(foreach file,$(PROTO_FILES),$(call exec-command,protoc --go_out=plugins=grpc:$(GOPATH)/src $(file)))
-	protoc --grpc-gateway_out=logtostderr=true,grpc_api_configuration=opentelemetry/proto/collector/trace/v1/trace_service_http.yaml:$(GOPATH)/src opentelemetry/proto/collector/trace/v1/trace_service.proto
-	protoc --grpc-gateway_out=logtostderr=true,grpc_api_configuration=opentelemetry/proto/collector/metrics/v1/metrics_service_http.yaml:$(GOPATH)/src opentelemetry/proto/collector/metrics/v1/metrics_service.proto
+	protoc --grpc-gateway_out=logtostderr=true,grpc_api_configuration=opentelemetry/jmacd/proto/collector/trace/v1/trace_service_http.yaml:$(GOPATH)/src opentelemetry/jmacd/proto/collector/trace/v1/trace_service.proto
+	protoc --grpc-gateway_out=logtostderr=true,grpc_api_configuration=opentelemetry/jmacd/proto/collector/metrics/v1/metrics_service_http.yaml:$(GOPATH)/src opentelemetry/jmacd/proto/collector/metrics/v1/metrics_service.proto
 # Only need to copy generated files if repo was checked out
 # into a directory different from the standard GOPATH based one.
 ifneq ($(PWD), $(GOPATH_DIR))
@@ -44,12 +44,12 @@ gen-python:
 	rm -rf ./$(GENDIR)/python
 	mkdir -p ./$(GENDIR)/python
 	$(foreach file,$(PROTO_FILES),$(call exec-command, protoc --python_out=./$(GENDIR)/python $(file)))
-	python -m grpc_tools.protoc -I ./ --python_out=./$(GENDIR)/python --grpc_python_out=./$(GENDIR)/python opentelemetry/proto/collector/trace/v1/trace_service.proto
-	python -m grpc_tools.protoc -I ./ --python_out=./$(GENDIR)/python --grpc_python_out=./$(GENDIR)/python opentelemetry/proto/collector/metrics/v1/metrics_service.proto
+	python -m grpc_tools.protoc -I ./ --python_out=./$(GENDIR)/python --grpc_python_out=./$(GENDIR)/python opentelemetry/jmacd/proto/collector/trace/v1/trace_service.proto
+	python -m grpc_tools.protoc -I ./ --python_out=./$(GENDIR)/python --grpc_python_out=./$(GENDIR)/python opentelemetry/jmacd/proto/collector/metrics/v1/metrics_service.proto
 
 # Generate Swagger
 .PHONY: gen-swagger
 gen-swagger:
 	mkdir -p $(OPENAPI_OUTDIR)
-	protoc --plugin=protoc-gen-swagger=/usr/local/bin/protoc-gen-swagger --swagger_out=logtostderr=true,grpc_api_configuration=opentelemetry/proto/collector/trace/v1/trace_service_http.yaml:$(OPENAPI_OUTDIR) opentelemetry/proto/collector/trace/v1/trace_service.proto
-	protoc --plugin=protoc-gen-swagger=/usr/local/bin/protoc-gen-swagger --swagger_out=logtostderr=true,grpc_api_configuration=opentelemetry/proto/collector/metrics/v1/metrics_service_http.yaml:$(OPENAPI_OUTDIR) opentelemetry/proto/collector/metrics/v1/metrics_service.proto
+	protoc --plugin=protoc-gen-swagger=/usr/local/bin/protoc-gen-swagger --swagger_out=logtostderr=true,grpc_api_configuration=opentelemetry/jmacd/proto/collector/trace/v1/trace_service_http.yaml:$(OPENAPI_OUTDIR) opentelemetry/jmacd/proto/collector/trace/v1/trace_service.proto
+	protoc --plugin=protoc-gen-swagger=/usr/local/bin/protoc-gen-swagger --swagger_out=logtostderr=true,grpc_api_configuration=opentelemetry/jmacd/proto/collector/metrics/v1/metrics_service_http.yaml:$(OPENAPI_OUTDIR) opentelemetry/jmacd/proto/collector/metrics/v1/metrics_service.proto

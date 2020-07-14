@@ -14,10 +14,10 @@
 
 syntax = "proto3";
 
-package opentelemetry.proto.trace.v1;
+package opentelemetry.jmacd.proto.trace.v1;
 
 option java_multiple_files = true;
-option java_package = "io.opentelemetry.proto.trace.v1";
+option java_package = "io.opentelemetry.jmacd.proto.trace.v1";
 option java_outer_classname = "TraceConfigProto";
 option go_package = "github.com/jmacd/opentelemetry-proto/gen/go/collector/trace/v1";
 

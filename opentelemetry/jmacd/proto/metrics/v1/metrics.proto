@@ -14,13 +14,13 @@
 
 syntax = "proto3";
 
-package opentelemetry.proto.metrics.v1;
+package opentelemetry.jmacd.proto.metrics.v1;
 
-import "opentelemetry/proto/common/v1/common.proto";
-import "opentelemetry/proto/resource/v1/resource.proto";
+import "opentelemetry/jmacd/proto/common/v1/common.proto";
+import "opentelemetry/jmacd/proto/resource/v1/resource.proto";
 
 option java_multiple_files = true;
-option java_package = "io.opentelemetry.proto.metrics.v1";
+option java_package = "io.opentelemetry.jmacd.proto.metrics.v1";
 option java_outer_classname = "MetricsProto";
 option go_package = "github.com/jmacd/opentelemetry-proto/gen/go/metrics/v1";
 
@@ -28,7 +28,7 @@ option go_package = "github.com/jmacd/opentelemetry-proto/gen/go/metrics/v1";
 message ResourceMetrics {
   // The resource for the metrics in this message.
   // If this field is not set then no resource info is known.
-  opentelemetry.proto.resource.v1.Resource resource = 1;
+  opentelemetry.jmacd.proto.resource.v1.Resource resource = 1;
 
   // A list of metrics that originate from a resource.
   repeated InstrumentationLibraryMetrics instrumentation_library_metrics = 2;
@@ -38,7 +38,7 @@ message ResourceMetrics {
 message InstrumentationLibraryMetrics {
   // The instrumentation library information for the metrics in this message.
   // If this field is not set then no library info is known.
-  opentelemetry.proto.common.v1.InstrumentationLibrary instrumentation_library = 1;
+  opentelemetry.jmacd.proto.common.v1.InstrumentationLibrary instrumentation_library = 1;
 
   // A list of metrics that originate from an instrumentation library.
   repeated Metric metrics = 2;
@@ -359,7 +359,7 @@ message MetricDescriptor {
 // that is used is determined by the descriptor ValueType.
 message DataPoint {
   // The set of labels that uniquely identify this timeseries.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
+  repeated opentelemetry.jmacd.proto.common.v1.StringKeyValue labels = 1;
 
   // start_time_unix_nano is the start of the interval for which a CUMULATIVE or
   // DELTA kind of metric was computed.
@@ -511,7 +511,7 @@ message RawValue {
   fixed64 time_unix_nano = 3;
 
   // Labels that were passed with the measurement, but not included in the DataPoint's labels
-  repeated opentelemetry.proto.common.v1.StringKeyValue additional_labels = 4;
+  repeated opentelemetry.jmacd.proto.common.v1.StringKeyValue additional_labels = 4;
 
   // (Optional) Span ID of the current trace
   bytes span_id = 5;

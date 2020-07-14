@@ -14,32 +14,35 @@
 
 syntax = "proto3";
 
-package opentelemetry.proto.collector.metrics.v1;
+// NOTE: This proto is experimental and is subject to change at this point.
+// Please do not use it at the moment.
 
-import "opentelemetry/proto/metrics/v1/metrics.proto";
+package opentelemetry.jmacd.proto.collector.trace.v1;
+
+import "opentelemetry/jmacd/proto/trace/v1/trace.proto";
 
 option java_multiple_files = true;
-option java_package = "io.opentelemetry.proto.collector.metrics.v1";
-option java_outer_classname = "MetricsServiceProto";
-option go_package = "github.com/jmacd/opentelemetry-proto/gen/go/collector/metrics/v1";
+option java_package = "io.opentelemetry.jmacd.proto.collector.trace.v1";
+option java_outer_classname = "TraceServiceProto";
+option go_package = "github.com/jmacd/opentelemetry-proto/gen/go/collector/trace/v1";
 
-// Service that can be used to push metrics between one Application
-// instrumented with OpenTelemetry and a collector, or between a collector and a
-// central collector.
-service MetricsService {
+// Service that can be used to push spans between one Application instrumented with
+// OpenTelemetry and an collector, or between an collector and a central collector (in this
+// case spans are sent/received to/from multiple Applications).
+service TraceService {
   // For performance reasons, it is recommended to keep this RPC
   // alive for the entire life of the application.
-  rpc Export(ExportMetricsServiceRequest) returns (ExportMetricsServiceResponse) {}
+  rpc Export(ExportTraceServiceRequest) returns (ExportTraceServiceResponse) {}
 }
 
-message ExportMetricsServiceRequest {
-  // An array of ResourceMetrics.
+message ExportTraceServiceRequest {
+  // An array of ResourceSpans.
   // For data coming from a single resource this array will typically contain one
   // element. Intermediary nodes (such as OpenTelemetry Collector) that receive
   // data from multiple origins typically batch the data before forwarding further and
   // in that case this array will contain multiple elements.
-  repeated opentelemetry.proto.metrics.v1.ResourceMetrics resource_metrics = 1;
+  repeated opentelemetry.jmacd.proto.trace.v1.ResourceSpans resource_spans = 1;
 }
 
-message ExportMetricsServiceResponse {
+message ExportTraceServiceResponse {
 }
