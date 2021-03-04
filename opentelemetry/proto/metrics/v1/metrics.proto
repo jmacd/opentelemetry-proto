@@ -446,14 +446,15 @@ message IntHistogramDataPoint {
 }
 
 // HistogramDataPoint is a single data point in a timeseries that
-// describes a population of values that were recorded over time,
-// as desacribed by the aggregation_temporality of the enclosing Histogram.
+// describes a population of values that were recorded over time, as
+// described by the aggregation_temporality of the enclosing
+// Histogram.
 //
 // A HistogramDataPoint includes the Sum and Count statistics and an
-// optional set buckets that subdivide the population count into
-// non-overlapping buckets.  When no buckets are specified, the
-// Histogram reduces to just Sum and Count series with corresponding
-// aggregation temporality.
+// optional set of buckets that subdivide the population into
+// "bucketed" counts, which are non-overlapping ranges of the number
+// line.  When no buckets are specified, the Histogram reduces to just
+// Sum and Count series with corresponding aggregation temporality.
 message HistogramDataPoint {
   // The set of labels that uniquely identify this timeseries.
   repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
@@ -488,11 +489,10 @@ message HistogramDataPoint {
   // buckets if a histogram is provided.
   double sum = 5;
 
-  // buckets are one of the defined bucketing strategies supported in
-  // OpenTelemetry.
+  // buckets are one of several defined bucketing strategies
   //
   // If this field is omitted, there is an implied single bucket
-  // spanning (-Inf,+Inf).
+  // spanning (-Inf,+Inf) containing the whole population
   oneof buckets {
     // explicit_buckets are support encoding arbitrary boundaries and
     // counts This is not a compact encoding.
@@ -509,7 +509,7 @@ message HistogramDataPoint {
 message ExplicitBuckets {
   // boundaries specifies buckets with explicitly defined boundaries.
   //
-  // This defines size(boundaries) + 1 (= N) buckets. The boundaries for bucket
+  // This defines N = size(boundaries) + 1 buckets. The boundaries for bucket
   // at index i are:
   //
   // (-infinity, bounds[i]) for i == 0
@@ -522,12 +522,12 @@ message ExplicitBuckets {
   // a boolean value which decides what type of intervals to use.
   repeated double boundaries = 1;
 
-  // bucket_counts is an optional field contains the count values of histogram
+  // counts is an optional field contains the count values of histogram
   // for each bucket.
   //
-  // The sum of the bucket_counts must equal the value in the count field.
+  // The sum of these counts must equal the count field of the enclosing Histogram.
   //
-  // The number of elements in bucket_counts array must be by one greater than
+  // The number of elements in counts array must be by one greater than
   // the number of elements in boundaries array.
   repeated fixed64 counts = 2;
 }
